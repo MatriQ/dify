@@ -7,12 +7,13 @@ LABEL maintainer="takatost@gmail.com"
 FROM base as packages
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc g++ libc-dev libffi-dev libgmp-dev libmpfr-dev libmpc-dev
+    && apt-get install -y --no-install-recommends gcc g++ libc-dev libffi-dev libgmp-dev libmpfr-dev libmpc-dev \
+    && curl -sSL https://install.python-poetry.org | python - --version 1.8.3
 
-COPY requirements.txt /requirements.txt
+COPY poetry.toml poetry.lock pyproject.toml ./
 
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --prefix=/pkg -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    poetry install --no-root --no-dev
 
 # production stage
 FROM base AS production
@@ -46,4 +47,4 @@ RUN chmod +x /entrypoint.sh
 ARG COMMIT_SHA
 ENV COMMIT_SHA ${COMMIT_SHA}
 
-ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
+ENTRYPOINT ["poetry", "run", "entrypoint.sh"]
